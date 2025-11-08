@@ -1,0 +1,12 @@
+# Ignore everything
+*
+
+# Allow Maven build files
+!pom.xml
+!mvnw
+!mvnw.cmd
+!src/**
+!target/*-runner
+!target/*-runner.jar
+!target/lib/**
+!target/quarkus-app/**
