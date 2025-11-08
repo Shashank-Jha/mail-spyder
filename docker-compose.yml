@@ -1,0 +1,55 @@
+services:
+  mysql:
+    image: mysql:8.1
+    container_name: smtp_mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      TZ: Asia/Kolkata
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - mail-network
+
+  smtp_app:
+    build: SMTP-Server
+    container_name: smtp_server
+    depends_on:
+      - mysql
+    ports:
+      - "25:25"
+    env_file:
+      - .env
+    restart: always
+    networks:
+      - mail-network
+
+  api_server:
+    build: api-server
+    container_name: mailspyder-api
+    depends_on:
+      - mysql
+    ports:
+      - "8080:8080"
+    environment:
+      QUARKUS_DATASOURCE_URL: jdbc:mysql://mysql:3306/${DB_NAME}
+      QUARKUS_DATASOURCE_USERNAME: ${DB_USER}
+      QUARKUS_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    restart: always
+    networks:
+      - mail-network
+    command: >
+      sh -c "until nc -z mysql 3306; do echo 'Waiting for MySQL...'; sleep 2; done;
+             java -jar /app/app.jar"
+
+volumes:
+  mysql_data:
+
+networks:
+  mail-network:
+    driver: bridge
