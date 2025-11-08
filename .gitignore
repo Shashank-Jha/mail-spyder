@@ -1,0 +1,10 @@
+.env
+.idea/*
+api-server/.idea
+SMTP-Server/.idea
+
+api-server/src/main/resources/application.properties
+SMTP-Server/example-test-telnet.txt
+
+SMTP-Server/target
+api-server/target
