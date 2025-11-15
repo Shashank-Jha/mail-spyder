@@ -180,7 +180,7 @@ public class SMTPHandler implements Runnable {
             }
         }
         logger.info("Subject extracted from email body data!");
-        EmailData emailData = new EmailData(safeTo, safeFrom, subject, message, rawData, timestamp);
+        EmailData emailData = new EmailData(safeFrom, safeTo, subject, message, rawData, timestamp);
 
         emailService.saveEmail(emailData);
     }
