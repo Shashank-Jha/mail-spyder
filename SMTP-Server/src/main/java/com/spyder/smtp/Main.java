@@ -3,7 +3,7 @@ package com.spyder.smtp;
 import com.spyder.smtp.handler.SMTPHandler;
 import com.spyder.smtp.scheduler.EmailPrunScheduler;
 import com.spyder.smtp.service.EmailService;
-import com.spyder.smtp.service.impl.PostgresEmailService;
+import com.spyder.smtp.service.impl.SQLEmailService;
 import com.spyder.smtp.utils.HibernateUtil;
 import io.github.cdimascio.dotenv.Dotenv;
 

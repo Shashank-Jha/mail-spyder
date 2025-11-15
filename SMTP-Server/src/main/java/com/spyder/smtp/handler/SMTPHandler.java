@@ -60,6 +60,7 @@ public class SMTPHandler implements Runnable {
                         validateRCPTEmail(to);
                     }catch(Exception e){
                         logger.log(Level.SEVERE, "Not a valid recipient email!", e);
+                        break;
                     }
 
                 } else if (line.equals("DATA")) {
@@ -102,9 +103,13 @@ public class SMTPHandler implements Runnable {
         }
     }
 
-    // TODO
     private void validateRCPTEmail(String rcptEmail) throws Exception{
-        return;
+        logger.info("validating whether, email: +"+rcptEmail+" exists or not!");
+        boolean isValid = emailService.isValidEmailId(rcptEmail);
+        if(!isValid){
+            throw new Exception("Invalid email!");
+        }
+
     }
 
     private void saveEmail(String to, String from, StringBuilder data) {
