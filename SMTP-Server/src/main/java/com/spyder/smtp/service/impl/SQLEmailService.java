@@ -9,7 +9,7 @@ import org.hibernate.query.Query;
 
 import java.util.List;
 
-public class PostgresEmailService implements EmailService {
+public class SQLEmailService implements EmailService {
 
     @Override
     public void saveEmail(EmailData data) {
@@ -21,20 +21,6 @@ public class PostgresEmailService implements EmailService {
         } catch (Exception e) {
             System.err.println("❌ Failed to save email with Hibernate");
             e.printStackTrace();
-        }
-    }
-
-    @Override
-    public List<EmailData> fetchAllByEmailId(String emailId) {
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            String hql = "FROM EmailData e WHERE e.recipient LIKE :email";
-            Query<EmailData> query = session.createQuery(hql, EmailData.class);
-            query.setParameter("email", "%" + emailId + "%");
-            return query.list();
-        } catch (Exception e) {
-            System.err.println("❌ Failed to fetch emails via Hibernate");
-            e.printStackTrace();
-            return List.of();
         }
     }
 }

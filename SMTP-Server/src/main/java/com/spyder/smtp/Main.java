@@ -28,7 +28,7 @@ public class Main {
         //Email table Pruning every week
         startCleanupScheduler();
 
-        EmailService emailService = new PostgresEmailService();
+        EmailService emailService = new SQLEmailService();
         try (ServerSocket serverSocket = new ServerSocket(25, 50, InetAddress.getByName("0.0.0.0"))) {
             System.out.println("SMTP Server running on port: 25");
             System.out.println(dbUrl + "->" + dbUser + "->" + dbPass);
