@@ -8,6 +8,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.*;
 
 public class SMTPHandler implements Runnable {
@@ -20,6 +21,35 @@ public class SMTPHandler implements Runnable {
     public SMTPHandler(Socket socket, EmailService emailService) {
         this.socket = socket;
         this.emailService = emailService;
+    }
+
+    // ==========================================
+    //  RATE LIMITING (PER IP)
+    // ==========================================
+    private static final int MAX_COMMANDS_PER_MIN = 20; // limit per IP
+    private static final ConcurrentHashMap<String, RateState> rateLimits = new ConcurrentHashMap<>();
+
+    private static class RateState {
+        int count = 0;
+        long windowStart = System.currentTimeMillis();
+    }
+
+    // Check if this IP has exceeded limits
+    private boolean isRateLimited() {
+        String ip = socket.getInetAddress().getHostAddress();
+        RateState state = rateLimits.computeIfAbsent(ip, k -> new RateState());
+
+        long now = System.currentTimeMillis();
+
+        // Reset every minute
+        if (now - state.windowStart > 60_000) {
+            state.windowStart = now;
+            state.count = 0;
+        }
+
+        state.count++;
+
+        return state.count > MAX_COMMANDS_PER_MIN;
     }
 
     @Override
@@ -38,6 +68,20 @@ public class SMTPHandler implements Runnable {
 
             while ((line = in.readLine()) != null) {
                 logger.info("Received: " + line);
+
+                // ------------------------------------------------------
+                // Apply Rate Limit per command
+                // ------------------------------------------------------
+                if (isRateLimited()) {
+                    out.write("421 Too many requests. Slow down.\r\n");
+                    out.flush();
+                    logger.warning("Rate limit exceeded for IP " + socket.getInetAddress().getHostAddress());
+                    break;
+                }
+
+                // ------------------------------------------------------
+                // SMTP COMMAND PROCESSING
+                // ------------------------------------------------------
 
                 if (line.startsWith("HELO") || line.startsWith("EHLO")) {
                     out.write("250 Hello\r\n");
@@ -103,6 +147,9 @@ public class SMTPHandler implements Runnable {
         }
     }
 
+    // ----------------------------------------------------------------------
+    // VALIDATION: CALLS API SERVER
+    // ----------------------------------------------------------------------
     private void validateRCPTEmail(String rcptEmail) throws Exception{
         logger.info("validating whether, email: +"+rcptEmail+" exists or not!");
         boolean isValid = emailService.isValidEmailId(rcptEmail);
@@ -112,6 +159,9 @@ public class SMTPHandler implements Runnable {
 
     }
 
+    // ----------------------------------------------------------------------
+    // SAVE EMAIL LOGIC
+    // ----------------------------------------------------------------------
     private void saveEmail(String to, String from, StringBuilder data) {
         String safeTo = to.replaceAll("[^a-zA-Z0-9@._-]", "_");
         String safeFrom = from.replaceAll("[^a-zA-Z0-9@._-]", "_");
