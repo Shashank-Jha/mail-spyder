@@ -27,4 +27,12 @@ public class EmailResource {
         return emailRepo.listAll();
     }
 
+    @GET
+    @Path("/{emailId}")
+    public List<Emails> getAllById(@PathParam("emailId") String emailId){
+        List<Emails> result = emailRepo.find("recipient", emailId).list();
+        if(null != result) return result;
+        return List.of();
+    }
+
 }
